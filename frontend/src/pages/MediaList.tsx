@@ -18,49 +18,78 @@ export default function MediaList() {
   const ageMonths = searchParams.get('age_months') ? Number(searchParams.get('age_months')) : undefined
   const eventName = searchParams.get('event_name') || ''
   const tag = searchParams.get('tag') || ''
+  const query = searchParams.get('q') || ''
   const isFavorite = searchParams.get('is_favorite') === 'true'
 
-  const loadFilters = async () => {
-    try {
-      const [groups, evs, ts] = await Promise.all([
-        fetchAgeGroups(),
-        fetchEvents(),
-        fetchTags()
-      ])
-      setAgeGroups(groups)
-      setEvents(evs)
-      setTags(ts)
-    } catch (error) {
-      console.error('Error loading filters:', error)
-    }
-  }
-
-  const loadMedia = useCallback(async () => {
+  const updateSearchParams = useCallback((updates: Record<string, string | number | boolean | undefined>) => {
+    const newParams = new URLSearchParams(searchParams)
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === '' || value === false) {
+        newParams.delete(key)
+      } else {
+        newParams.set(key, String(value))
+      }
+    })
     setLoading(true)
-    try {
-      const data = await fetchMedia({
-        file_type: fileType || undefined,
-        age_months: ageMonths,
-        event_name: eventName || undefined,
-        tag: tag || undefined,
-        q: searchParams.get('q') || undefined,
-        is_favorite: isFavorite || undefined
-      })
-      setMedia(data)
-    } catch (error) {
-      console.error('Error loading media:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [fileType, ageMonths, eventName, tag, isFavorite, searchParams])
+    setSearchParams(newParams)
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
-    loadFilters()
+    let ignore = false
+
+    const loadFilters = async () => {
+      try {
+        const [groups, evs, ts] = await Promise.all([
+          fetchAgeGroups(),
+          fetchEvents(),
+          fetchTags()
+        ])
+        if (!ignore) {
+          setAgeGroups(groups)
+          setEvents(evs)
+          setTags(ts)
+        }
+      } catch (error) {
+        console.error('Error loading filters:', error)
+      }
+    }
+
+    void loadFilters()
+    return () => {
+      ignore = true
+    }
   }, [])
 
   useEffect(() => {
-    loadMedia()
-  }, [loadMedia])
+    let ignore = false
+
+    const loadMedia = async () => {
+      try {
+        const data = await fetchMedia({
+          file_type: fileType || undefined,
+          age_months: ageMonths,
+          event_name: eventName || undefined,
+          tag: tag || undefined,
+          q: query || undefined,
+          is_favorite: isFavorite || undefined
+        })
+        if (!ignore) {
+          setMedia(data)
+        }
+      } catch (error) {
+        console.error('Error loading media:', error)
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void loadMedia()
+    return () => {
+      ignore = true
+    }
+  }, [fileType, ageMonths, eventName, tag, query, isFavorite])
 
   // Debounced search
   useEffect(() => {
@@ -71,19 +100,7 @@ export default function MediaList() {
       }
     }, 300)
     return () => clearTimeout(timer)
-  }, [searchQuery, searchParams])
-
-  const updateSearchParams = (updates: Record<string, string | number | boolean | undefined>) => {
-    const newParams = new URLSearchParams(searchParams)
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === undefined || value === '' || value === false) {
-        newParams.delete(key)
-      } else {
-        newParams.set(key, String(value))
-      }
-    })
-    setSearchParams(newParams)
-  }
+  }, [searchQuery, searchParams, updateSearchParams])
 
   const handleToggleFavorite = async (id: number) => {
     // Optimistic update
