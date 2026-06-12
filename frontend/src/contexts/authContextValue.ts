@@ -6,7 +6,7 @@ export interface AuthContextType {
   login: (user: string, password: string) => Promise<void>
   logout: () => void
 }
-export const AuthContext = createContext<AuthContextType>{
+export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   username: null,
   login: async () => {},

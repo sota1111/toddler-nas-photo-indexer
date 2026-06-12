@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsername(user)
   }
 
-  const logout: = () => {
+  const logout = () => {
     localStorage.removeItem(TOKEN_KEY)
     setIsAuthenticated(false)
     setUsername(null)
