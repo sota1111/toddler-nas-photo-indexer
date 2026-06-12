@@ -74,3 +74,53 @@ AUTH_SECRET_KEY=your_secret_key_at_least_32_chars
 
 アプリにアクセスすると自動的にログイン画面へリダイレクトされます。
 設定した `AUTH_USERNAME` / `AUTH_PASSWORD` でログインしてください。
+
+## GCP デプロイ準備
+
+### 概要
+
+このアプリは FastAPI (Backend) + React (Frontend) 構成であり、Cloud Run にデプロイできます。
+
+**重要**: NAS 上の写真・動画ファイル本体は GCP に保存しません。GCP 側はメタデータ管理と検索機能のみを担当します。
+
+### コンテナ化
+
+```bash
+# Backend
+docker build -t toddler-nas-photo-indexer-backend ./backend
+docker run -p 8000:8000 --env-file .env toddler-nas-photo-indexer-backend
+
+# Frontend
+docker build -t toddler-nas-photo-indexer-frontend ./frontend
+docker run -p 8080:8080 toddler-nas-photo-indexer-frontend
+```
+
+### GCP 実行環境
+
+- **Backend**: Cloud Run (ポート `8000`)
+- **Frontend**: Cloud Run (ポート `8080`) または Firebase Hosting
+
+### データ永続化について
+
+現在 SQLite を使用しています。Cloud Run はステートレスなため、本番環境では以下を検討してください:
+
+- メタデータ: **Firestore** または **Cloud SQL** への移行
+- NAS ファイル: ローカル NAS に残し、バックエンドが NAS に接続する構成
+
+### NAS 接続について
+
+- GCP 上の Cloud Run から直接 NAS へのアクセスには VPN または別の接続方法が必要
+- 将来的には NAS 側にエージェントを置き、GCP に同期する方式を検討
+
+### 環境変数
+
+| 変数名 | 説明 |
+|--------|------|
+| AUTH_USERNAME | 認証ユーザー名 |
+| AUTH_PASSWORD | 認証パスワード（Secret Manager 推奨） |
+| AUTH_SECRET_KEY | JWT署名キー（Secret Manager 推奨） |
+
+### 注意事項
+
+- 実際の `.env` ファイルは Git 管理対象外 (`.gitignore` 設定済み)
+- NAS の接続情報・パスは `.env` で管理し、コードに直書きしないこと
