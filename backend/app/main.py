@@ -2,14 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .routers import media
+from .routers import auth as auth_router
 import os
 
-# Create database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Toddler NAS Photo Indexer API")
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -18,6 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router.router, prefix="/api/auth", tags=["auth"])
 app.include_router(media.router)
 
 @app.get("/")

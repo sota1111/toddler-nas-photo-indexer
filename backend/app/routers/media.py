@@ -4,6 +4,7 @@ from typing import List, Optional
 from .. import models, schemas
 from ..database import get_db
 from sqlalchemy import or_, func
+from ..routers.auth import get_current_user
 
 router = APIRouter(
     prefix="/api/media",
@@ -11,7 +12,7 @@ router = APIRouter(
 )
 
 @router.post("", response_model=schemas.Media)
-def create_media(media: schemas.MediaCreate, db: Session = Depends(get_db)):
+def create_media(media: schemas.MediaCreate, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_media = models.Media(**media.model_dump())
     db.add(db_media)
     db.commit()
@@ -26,7 +27,8 @@ def list_media(
     tag: Optional[str] = None,
     q: Optional[str] = None,
     is_favorite: Optional[bool] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
 ):
     query = db.query(models.Media)
     
@@ -53,7 +55,7 @@ def list_media(
     return query.all()
 
 @router.get("/tags", response_model=List[str])
-def list_tags(db: Session = Depends(get_db)):
+def list_tags(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     media_list = db.query(models.Media.tags).filter(models.Media.tags != None).all()
     tags_set = set()
     for m in media_list:
@@ -63,12 +65,12 @@ def list_tags(db: Session = Depends(get_db)):
     return sorted(list(tags_set))
 
 @router.get("/events", response_model=List[str])
-def list_events(db: Session = Depends(get_db)):
+def list_events(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     events = db.query(models.Media.event_name).filter(models.Media.event_name != None).distinct().all()
     return sorted([e[0] for e in events])
 
 @router.get("/age-groups", response_model=List[schemas.AgeGroupCount])
-def list_age_groups(db: Session = Depends(get_db)):
+def list_age_groups(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     results = db.query(
         models.Media.age_months, 
         func.count(models.Media.id)
@@ -76,15 +78,15 @@ def list_age_groups(db: Session = Depends(get_db)):
     return [{"age_months": r[0], "count": r[1]} for r in results]
 
 @router.get("/by-age/{age_months}", response_model=List[schemas.Media])
-def list_by_age(age_months: int, db: Session = Depends(get_db)):
+def list_by_age(age_months: int, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     return db.query(models.Media).filter(models.Media.age_months == age_months).all()
 
 @router.get("/by-event/{event_name}", response_model=List[schemas.Media])
-def list_by_event(event_name: str, db: Session = Depends(get_db)):
+def list_by_event(event_name: str, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     return db.query(models.Media).filter(models.Media.event_name == event_name).all()
 
 @router.get("/search", response_model=List[schemas.Media])
-def search_media(q: str = Query(...), db: Session = Depends(get_db)):
+def search_media(q: str = Query(...), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     return db.query(models.Media).filter(
         or_(
             models.Media.filename.contains(q),
@@ -95,14 +97,14 @@ def search_media(q: str = Query(...), db: Session = Depends(get_db)):
     ).all()
 
 @router.get("/{media_id}", response_model=schemas.Media)
-def get_media(media_id: int, db: Session = Depends(get_db)):
+def get_media(media_id: int, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_media = db.query(models.Media).filter(models.Media.id == media_id).first()
     if db_media is None:
         raise HTTPException(status_code=404, detail="Media not found")
     return db_media
 
 @router.put("/{media_id}", response_model=schemas.Media)
-def update_media(media_id: int, media: schemas.MediaUpdate, db: Session = Depends(get_db)):
+def update_media(media_id: int, media: schemas.MediaUpdate, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_media = db.query(models.Media).filter(models.Media.id == media_id).first()
     if db_media is None:
         raise HTTPException(status_code=404, detail="Media not found")
@@ -116,7 +118,7 @@ def update_media(media_id: int, media: schemas.MediaUpdate, db: Session = Depend
     return db_media
 
 @router.delete("/{media_id}")
-def delete_media(media_id: int, db: Session = Depends(get_db)):
+def delete_media(media_id: int, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_media = db.query(models.Media).filter(models.Media.id == media_id).first()
     if db_media is None:
         raise HTTPException(status_code=404, detail="Media not found")
@@ -126,7 +128,7 @@ def delete_media(media_id: int, db: Session = Depends(get_db)):
     return {"detail": "Media deleted"}
 
 @router.patch("/{media_id}/favorite", response_model=schemas.Media)
-def toggle_favorite(media_id: int, db: Session = Depends(get_db)):
+def toggle_favorite(media_id: int, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     db_media = db.query(models.Media).filter(models.Media.id == media_id).first()
     if db_media is None:
         raise HTTPException(status_code=404, detail="Media not found")

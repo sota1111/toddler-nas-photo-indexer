@@ -55,3 +55,22 @@ Swagger UI (APIドキュメント) は `http://localhost:8000/docs` で確認で
 - `GET    /api/media/tags` — ユニークなタグ一覧
 - `GET    /api/media/events` — ユニークなイベント名一覧
 - `GET    /api/media/age-groups` — 月齢別グループと件数
+
+## 認証設定
+
+このアプリは JWT 認証を使用しています。
+
+### 環境変数の設定
+
+`.env.example` をコピーして `.env` を作成し、以下の変数を設定してください：
+
+```env
+AUTH_USERNAME=your_username
+AUTH_PASSWORD=your_password
+AUTH_SECRET_KEY=your_secret_key_at_least_32_chars
+```
+
+### ログイン
+
+アプリにアクセスすると自動的にログイン画面へリダイレクトされます。
+設定した `AUTH_USERNAME` / `AUTH_PASSWORD` でログインしてください。
