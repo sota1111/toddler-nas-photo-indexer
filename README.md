@@ -94,6 +94,24 @@ docker run -p 8000:8000 --env-file .env toddler-nas-photo-indexer-backend
 docker build -t toddler-nas-photo-indexer-frontend ./frontend
 docker run -p 8080:8080 toddler-nas-photo-indexer-frontend
 ```
+### GCP Secret Manager セットアップ (Cloud Run本番デプロイ時)
+
+Cloud Run へのデプロイ前に、以下の機密情報をSecret Managerに登録してください。
+
+```bash
+# Secret の作成
+echo -n "パスワード" | gcloud secrets create nas-indexer-auth-password --data-file=- --project=YOUR_PROJECT_ID
+echo -n "秘密鍵" | gcloud secrets create nas-indexer-auth-secret-key --data-file=- --project=YOUR_PROJECT_ID
+
+# Cloud Run サービスアカウントに Secret Manager アクセス権を付与
+# (デプロイ後、またはデフォルトのコンピュートSAに付与)
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+  --member="serviceAccount:YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+```
+
+ローカル開発では `.env` ファイルに値を直接設定してください。
+
 
 ### GCP 実行環境
 

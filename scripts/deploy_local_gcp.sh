@@ -34,12 +34,21 @@ gcloud builds submit ./backend \
   --tag="${IMAGE}:latest" \
   --timeout=600s
 
+# Secret Manager: 初回デプロイ前に以下を実行してください
+# echo -n "value" | gcloud secrets create nas-indexer-auth-password --data-file=- --project=$PROJECT_ID
+# echo -n "value" | gcloud secrets create nas-indexer-auth-secret-key --data-file=- --project=$PROJECT_ID
+# gcloud run services add-iam-policy-binding toddler-nas-photo-indexer-backend \
+#   --member="serviceAccount:$(gcloud run services describe toddler-nas-photo-indexer-backend --region=$REGION --project=$PROJECT_ID --format='value(spec.template.spec.serviceAccountName)' 2>/dev/null || echo PROJECT_NUMBER-compute@developer.gserviceaccount.com)" \
+#   --role="roles/secretmanager.secretAccessor" --region=$REGION --project=$PROJECT_ID
+
 gcloud run deploy "${SERVICE_NAME}" \
   --image="${IMAGE}:latest" \
   --project="${PROJECT_ID}" \
   --region="${REGION}" \
   --platform=managed \
   --allow-unauthenticated \
+  --set-env-vars="DATABASE_URL=${DATABASE_URL:-sqlite:///./data/media.db},PORT=8000" \
+  --set-secrets="AUTH_PASSWORD=nas-indexer-auth-password:latest,AUTH_SECRET_KEY=nas-indexer-auth-secret-key:latest" \
   --memory=512Mi \
   --timeout=300 \
   --quiet
