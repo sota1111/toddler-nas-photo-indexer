@@ -30,14 +30,6 @@ export interface AgeGroupCount {
   count: number
 }
 
-const BASE_URL = 'http://localhost:8000'
-const TOKEN_KEY = 'auth_token'
-
-function authHeaders(): Record<string, string> {
-  const token = localStorage.getItem(TOKEN_KEY)
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 export async function fetchMedia(filters?: {
   file_type?: string
   age_months?: number
@@ -55,17 +47,18 @@ export async function fetchMedia(filters?: {
     if (filters.q) params.append('q', filters.q)
     if (filters.is_favorite !== undefined) params.append('is_favorite', filters.is_favorite.toString())
   }
-  const response = await fetch(`${BASE_URL}/api/media?${params.toString()}`, {
-    headers: authHeaders(),
+  const response = await fetch(`/api/media?${params.toString()}`, {
+    credentials: 'include'
   })
   if (!response.ok) throw new Error('Failed to fetch media')
   return response.json()
 }
 
 export async function createMedia(data: MediaCreate): Promise<Media> {
-  const response = await fetch(`${BASE_URL}/api/media`, {
+  const response = await fetch(`/api/media`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   })
   if (!response.ok) throw new Error('Failed to create media')
@@ -73,33 +66,33 @@ export async function createMedia(data: MediaCreate): Promise<Media> {
 }
 
 export async function toggleFavorite(id: number): Promise<Media> {
-  const response = await fetch(`${BASE_URL}/api/media/${id}/favorite`, {
+  const response = await fetch(`/api/media/${id}/favorite`, {
     method: 'PATCH',
-    headers: authHeaders(),
+    credentials: 'include'
   })
   if (!response.ok) throw new Error('Failed to toggle favorite')
   return response.json()
 }
 
 export async function fetchTags(): Promise<string[]> {
-  const response = await fetch(`${BASE_URL}/api/media/tags`, {
-    headers: authHeaders(),
+  const response = await fetch(`/api/media/tags`, {
+    credentials: 'include'
   })
   if (!response.ok) throw new Error('Failed to fetch tags')
   return response.json()
 }
 
 export async function fetchEvents(): Promise<string[]> {
-  const response = await fetch(`${BASE_URL}/api/media/events`, {
-    headers: authHeaders(),
+  const response = await fetch(`/api/media/events`, {
+    credentials: 'include'
   })
   if (!response.ok) throw new Error('Failed to fetch events')
   return response.json()
 }
 
 export async function fetchAgeGroups(): Promise<AgeGroupCount[]> {
-  const response = await fetch(`${BASE_URL}/api/media/age-groups`, {
-    headers: authHeaders(),
+  const response = await fetch(`/api/media/age-groups`, {
+    credentials: 'include'
   })
   if (!response.ok) throw new Error('Failed to fetch age groups')
   return response.json()

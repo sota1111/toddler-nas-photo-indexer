@@ -9,7 +9,7 @@ import MediaList from './pages/MediaList'
 import Register from './pages/Register'
 
 function AppLayout() {
-  const { isAuthenticated, username, logout } = useAuth()
+  const { isAuthenticated, email, logout } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
@@ -30,7 +30,7 @@ function AppLayout() {
                     <Link to="/" className="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm font-medium">ホーム</Link>
                     <Link to="/media" className="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm font-medium">メディア一覧</Link>
                     <Link to="/register" className="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm font-medium">登録</Link>
-                    <span className="text-sm text-indigo-200">{username}</span>
+                    <span className="text-sm text-indigo-200">{email}</span>
                     <button onClick={logout} className="hover:bg-indigo-600 px-3 py-2 rounded-md text-sm font-medium">ログアウト</button>
                   </>
                 )}
