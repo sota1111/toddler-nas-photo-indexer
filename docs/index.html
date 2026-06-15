@@ -1,221 +1,196 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toddler NAS Photo Indexer 📸</title>
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77);
-            --bg-light: #fffcf0;
-            --text-color: #2d3436;
-            --card-radius: 20px;
-        }
-        body {
-            font-family: 'Hiragino Maru Gothic ProN', 'Comic Sans MS', cursive, sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-        }
-        header {
-            background: var(--primary-gradient);
-            padding: 4rem 1rem;
-            text-align: center;
-            color: white;
-            border-bottom-left-radius: 50% 20px;
-            border-bottom-right-radius: 50% 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
-        header p { font-size: 1.2rem; opacity: 0.9; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Photo Vault</title>
+<style>
+  :root {
+    --bg: #fff9f0;
+    --primary: #ff8a65;
+    --accent: #42a5f5;
+    --text: #4a3728;
+    --font: 'Nunito', 'Rounded Mplus 1c', sans-serif;
+  }
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    margin: 0;
+    padding: 0;
+  }
+  /* Header */
+  header {
+    background: #fff;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  h1 { margin: 0; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+  .nas-status { display: flex; gap: 1.5rem; font-size: 0.9rem; align-items: center; }
+  .dot { color: #81c784; font-size: 1.2rem; }
+  
+  .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
 
-        main {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
+  /* Controls */
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+  }
+  .tag-cloud { display: flex; flex-wrap: wrap; gap: 0.5rem; max-width: 60%; }
+  .tag {
+    background: #fff; border: 1px solid #e0e0e0; padding: 0.4rem 0.8rem; border-radius: 20px;
+    font-size: 0.85rem; cursor: pointer; transition: all 0.2s; color: var(--text);
+  }
+  .tag:hover, .tag.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tag-count { font-size: 0.75rem; opacity: 0.8; margin-left: 4px; }
 
-        .stats-bar {
-            background: white;
-            padding: 1rem;
-            border-radius: 50px;
-            display: flex;
-            justify-content: space-around;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-            font-weight: bold;
-        }
+  .right-controls { display: flex; flex-direction: column; gap: 1rem; align-items: flex-end; }
+  input[type="text"] {
+    padding: 0.5rem 1rem; border: 1px solid #e0e0e0; border-radius: 20px; outline: none; width: 200px;
+  }
+  .view-toggle { display: flex; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0; }
+  .view-btn { padding: 0.4rem 1rem; border: none; background: transparent; cursor: pointer; color: var(--text); }
+  .view-btn.active { background: #f5f5f5; font-weight: bold; }
 
-        .filters {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .filter-btn {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 50px;
-            background: white;
-            color: var(--text-color);
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-family: inherit;
-            font-weight: bold;
-        }
-        .filter-btn:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-        .filter-btn.active {
-            background: var(--text-color);
-            color: white;
-        }
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    padding: 1rem;
+  }
+  .polaroid {
+    background: #fff;
+    padding: 10px 10px 30px 10px;
+    box-shadow: 2px 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+  }
+  .polaroid:hover { transform: scale(1.05) rotate(0deg) !important; box-shadow: 4px 8px 20px rgba(0,0,0,0.15); z-index: 10; }
+  .photo { width: 100%; height: 200px; background: #eee; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.8); font-weight: bold; }
+  .caption { text-align: center; font-family: 'Comic Sans MS', cursive, sans-serif; font-size: 1.1rem; color: #555; }
+  .date { text-align: center; font-size: 0.75rem; color: #999; margin-top: 4px; }
 
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
-        .photo-card {
-            background: white;
-            border-radius: var(--card-radius);
-            overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            transition: all 0.5s ease;
-            position: relative;
-        }
-        .photo-card:hover { transform: scale(1.03); }
-        .photo-placeholder {
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
-        }
-        .photo-info {
-            padding: 1rem;
-            text-align: center;
-        }
-        .photo-label { font-weight: bold; display: block; margin-bottom: 0.3rem; }
-        .photo-date { font-size: 0.8rem; color: #999; }
+  /* Stats */
+  .stats-row {
+    display: flex; justify-content: space-around; margin-top: 3rem; border-top: 1px dashed #ccc; padding-top: 2rem;
+  }
+  .stat-card { text-align: center; background: rgba(255,255,255,0.5); padding: 1rem 2rem; border-radius: 8px; }
+  .stat-val { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
 
-        .review-section {
-            margin-top: 5rem;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-        .review-card {
-            padding: 1.5rem;
-            border-radius: var(--card-radius);
-            background: white;
-            border-left: 10px solid #eee;
-        }
-        .review-claude { border-color: #1a2b4a; }
-        .review-codex { border-color: #00ff41; background: #fafafa; }
-        .review-author { font-weight: bold; margin-bottom: 0.5rem; display: block; }
-
-        footer {
-            text-align: center;
-            padding: 4rem 1rem;
-            color: #999;
-            font-weight: bold;
-        }
-        
-        .fade-out { opacity: 0; transform: scale(0.9); }
-    </style>
+  details { margin: 2rem auto; max-width: 800px; padding: 1rem; background: #fff; border-radius: 8px; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  summary { cursor: pointer; font-weight: bold; color: var(--primary); }
+</style>
 </head>
 <body>
+  <header>
+    <h1>📸 Family Photo Vault</h1>
+    <div class="nas-status">
+      <span><span class="dot">●</span> Connected</span>
+      <span>総枚数: 12,450枚</span>
+      <span>フォルダ数: 128</span>
+    </div>
+  </header>
 
-<header>
-    <h1>📸 成長の記録を美しく</h1>
-    <p>AIが自動で整理する、わが子の宝物</p>
-</header>
-
-<main>
-    <div class="stats-bar">
-        <span>📊 総写真数: 12枚</span>
-        <span>📅 今月: 8枚</span>
-        <span>😊 笑顔率: 94.2%</span>
+  <div class="container">
+    <div class="controls">
+      <div class="tag-cloud" id="tag-cloud">
+      </div>
+      <div class="right-controls">
+        <input type="text" placeholder="思い出を検索...">
+        <div class="view-toggle">
+          <button class="view-btn active">グリッド</button>
+          <button class="view-btn">タイムライン</button>
+          <button class="view-btn">フォルダ</button>
+        </div>
+      </div>
     </div>
 
-    <div class="filters">
-        <button class="filter-btn active" onclick="filterPhotos('all', this)">すべて 📷</button>
-        <button class="filter-btn" onclick="filterPhotos('milestone', this)">マイルストーン 🌟</button>
-        <button class="filter-btn" onclick="filterPhotos('birthday', this)">誕生日 🎂</button>
-        <button class="filter-btn" onclick="filterPhotos('daily', this)">日常 ☀️</button>
-        <button class="filter-btn" onclick="filterPhotos('outdoor', this)">お外 🌿</button>
+    <div class="grid" id="photo-grid">
     </div>
 
-    <div class="photo-grid" id="photoGrid"></div>
+    <div class="stats-row">
+      <div class="stat-card"><div>今月</div><div class="stat-val">245枚</div></div>
+      <div class="stat-card"><div>今年</div><div class="stat-val">3,120枚</div></div>
+      <div class="stat-card"><div>最近の撮影</div><div class="stat-val">昨日</div></div>
+      <div class="stat-card"><div>未整理</div><div class="stat-val" style="color:#e57373">42枚</div></div>
+    </div>
+  </div>
 
-    <section class="review-section">
-        <div class="review-card review-claude">
-            <span class="review-author">Claude's Review:</span>
-            <p>"視覚的エネルギーが高い！ユーザーの目を引く力は三者の中でNo.1です。
-            コンテンツの多様性と遊び心は素晴らしい。彩度を5〜10%下げると
-            より洗練された印象になるかもしれませんが、ターゲット層への訴求は完璧。★★★★☆"</p>
-        </div>
-        <div class="review-card review-codex">
-            <span class="review-author">Codex's Review:</span>
-            <p>"パフォーマンス計測したら描画コストが一番高そうですが、
-            JSのロジックは実はきれいに整理されていて好印象です。グラデーションの多用は
-            私の美学と相反しますが、UX観点では明らかに勝者。認めます。★★★★☆"</p>
-        </div>
-    </section>
-</main>
-
-<footer>
-    ✨ Designed by Gemini — Creativity meets intelligence ✨
-</footer>
+  <details>
+    <summary>🤖 Design Credits & AI Reviews</summary>
+    <div style="margin-top:0.75rem;">
+      <p><strong>Designed by Gemini</strong></p>
+      <p><strong>Gemini's design note:</strong> 「子どもの写真を探すお父さんお母さんは、機能より感情で動いています。ポラロイドの傾きと温かいベージュトーンで"アルバムを開く感覚"を再現しました。NASというテクニカルな仕組みを、家族の記憶の宝箱として見せる—それがこのツールの機能美だと思います。」</p>
+      <p><strong>Claude's review:</strong> 「タグクラウドの設計が優秀。使用頻度が数字で見えるのでどのタグが価値あるか一目瞭然。ポラロイドの微妙な回転は見た目の温かさを大きく底上げしている。」</p>
+      <p><strong>Codex's review:</strong> 「タグフィルタのAND/OR論理が明示されていないのが気になるが、UIは直感的。グリッド→タイムライン切り替えのDOM操作が軽量でパフォーマンス的に好感が持てる。」</p>
+    </div>
+  </details>
 
 <script>
-    var photos = [
-        { id: 1, date: "2026/06/14", label: "🚶 はじめての一歩", tags: ["milestone"], color: "#ff6b9d", emoji: "🚶" },
-        { id: 2, date: "2026/06/12", label: "🎂 1歳のお誕生日", tags: ["birthday"], color: "#ffd93d", emoji: "🎂" },
-        { id: 3, date: "2026/06/10", label: "🛁 お風呂タイム", tags: ["daily"], color: "#6bcb77", emoji: "🛁" },
-        { id: 4, date: "2026/06/08", label: "🌸 公園で散歩", tags: ["outdoor"], color: "#4d96ff", emoji: "🌸" },
-        { id: 5, date: "2026/06/05", label: "😴 お昼寝中", tags: ["daily"], color: "#c77dff", emoji: "😴" },
-        { id: 6, date: "2026/06/03", label: "🍼 初めての離乳食", tags: ["milestone"], color: "#ff9f43", emoji: "🍼" },
-        { id: 7, date: "2026/06/01", label: "👶 ハイハイ練習", tags: ["milestone"], color: "#ee5a24", emoji: "👶" },
-        { id: 8, date: "2026/05/28", label: "🌷 花畑で撮影", tags: ["outdoor"], color: "#0abde3", emoji: "🌷" },
-        { id: 9, date: "2026/05/25", label: "🎠 はじめての遊園地", tags: ["birthday"], color: "#10ac84", emoji: "🎠" },
-        { id: 10, date: "2026/05/22", label: "😄 笑顔がかわいい", tags: ["daily"], color: "#fd79a8", emoji: "😄" },
-        { id: 11, date: "2026/05/18", label: "🧸 ぬいぐるみと遊ぶ", tags: ["daily"], color: "#fdcb6e", emoji: "🧸" },
-        { id: 12, date: "2026/05/15", label: "🏃 元気に走る", tags: ["milestone"], color: "#6c5ce7", emoji: "🏃" }
-    ];
+  const tags = [
+    { name: '誕生日', count: 120 }, { name: 'お花見', count: 45 }, { name: 'クリスマス', count: 80 },
+    { name: '海', count: 150 }, { name: 'プール', count: 90 }, { name: '食事', count: 400 },
+    { name: 'じいじ', count: 65 }, { name: '公園', count: 320 }
+  ];
 
-    function render(items) {
-        var grid = document.getElementById("photoGrid");
-        grid.innerHTML = "";
-        items.forEach(function(p) {
-            var card = document.createElement("div");
-            card.className = "photo-card";
-            card.innerHTML = "<div class='photo-placeholder' style='background-color:" + p.color + "44; color:" + p.color + "'>" + p.emoji + "</div>" +
-                             "<div class='photo-info'><span class='photo-label'>" + p.label + "</span><span class='photo-date'>" + p.date + "</span></div>";
-            grid.appendChild(card);
-        });
-    }
+  const photos = [
+    { cap: "3歳の誕生日ケーキ！", date: "2023.05.14", tags: ['誕生日'], color: "linear-gradient(135deg, #ff9a9e, #fecfef)" },
+    { cap: "初めての海", date: "2023.08.10", tags: ['海'], color: "linear-gradient(135deg, #a1c4fd, #c2e9fb)" },
+    { cap: "じいじと公園", date: "2023.09.22", tags: ['じいじ', '公園'], color: "linear-gradient(135deg, #d4fc79, #96e6a1)" },
+    { cap: "お庭でプール", date: "2023.07.25", tags: ['プール'], color: "linear-gradient(135deg, #89f7fe, #66a6ff)" },
+    { cap: "顔中パスタだらけ", date: "2023.10.05", tags: ['食事'], color: "linear-gradient(135deg, #fdfbfb, #ebedee)" },
+    { cap: "桜がきれいだね", date: "2023.04.02", tags: ['お花見'], color: "linear-gradient(135deg, #ffecd2, #fcb69f)" },
+    { cap: "サンタさん来た！", date: "2022.12.25", tags: ['クリスマス'], color: "linear-gradient(135deg, #ff0844, #ffb199)" },
+    { cap: "近所の公園でブランコ", date: "2023.10.12", tags: ['公園'], color: "linear-gradient(135deg, #e0c3fc, #8ec5fc)" },
+    { cap: "ハンバーグ大好き", date: "2023.10.15", tags: ['食事'], color: "linear-gradient(135deg, #f6d365, #fda085)" }
+  ];
 
-    function filterPhotos(tag, btn) {
-        var btns = document.querySelectorAll(".filter-btn");
-        btns.forEach(function(b) { b.classList.remove("active"); });
-        btn.classList.add("active");
+  let activeTag = null;
 
-        var grid = document.getElementById("photoGrid");
-        grid.style.opacity = "0";
-        
-        setTimeout(function() {
-            var filtered = tag === "all" ? photos : photos.filter(function(p) { return p.tags.indexOf(tag) !== -1; });
-            render(filtered);
-            grid.style.opacity = "1";
-        }, 300);
-    }
+  function renderTags() {
+    const cloud = document.getElementById('tag-cloud');
+    cloud.innerHTML = tags.map(t => `
+      <div class="tag ${activeTag === t.name ? 'active' : ''}" onclick="toggleTag('${t.name}')">
+        ${t.name} <span class="tag-count">${t.count}</span>
+      </div>
+    `).join('');
+  }
 
-    render(photos);
+  function renderGrid() {
+    const grid = document.getElementById('photo-grid');
+    const filtered = activeTag ? photos.filter(p => p.tags.includes(activeTag)) : photos;
+    
+    grid.innerHTML = filtered.map((p, i) => {
+      const rot = (Math.random() * 6 - 3).toFixed(1);
+      return `
+        <div class="polaroid" style="transform: rotate(${rot}deg)">
+          <div class="photo" style="background: ${p.color}">Image</div>
+          <div class="caption">${p.cap}</div>
+          <div class="date">${p.date}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function toggleTag(tag) {
+    if (activeTag === tag) activeTag = null;
+    else activeTag = tag;
+    renderTags();
+    renderGrid();
+  }
+
+  window.onload = () => {
+    renderTags();
+    renderGrid();
+  };
 </script>
-
 </body>
 </html>
