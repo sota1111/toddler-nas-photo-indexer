@@ -58,25 +58,40 @@ Swagger UI (APIドキュメント) は `http://localhost:8000/docs` で確認で
 
 ## 認証設定
 
-このアプリは Firebase Authentication を使用しています。
+このアプリは Firebase Authentication を使用しており、フロントエンドとバックエンドで役割を分担しています。
+
+### 責務分離 (Responsibility Split)
+
+-   **Backend (FastAPI)**: API専用サーバーです。`/login` などのUIは持ちません。
+    -   Frontend から送られてきた Firebase **ID Token** を `firebase_admin.verify_id_token` で検証します。
+    -   `ALLOWED_USER_EMAILS` に含まれるユーザーのみ許可し、HMAC署名付きのセッションCookie (`auth_token`) を発行します。
+    -   以降のリクエストではこの Cookie を検証して認可を行います。
+-   **Frontend (React)**: `/login` 画面を提供し、認証フローを開始します。
+    -   Firebase クライアントSDK (`VITE_FIREBASE_*`) を使用してサインインし、ID Token を取得します。
+    -   取得した ID Token を `POST /api/auth/session` に送信してセッションを開始します。
 
 ### 環境変数の設定
 
-`.env.example` をコピーして `.env` を作成し、以下の変数を設定してください：
+`.env.example` を参考に、役割ごとに以下の変数を設定してください。
 
-```env
-VITE_FIREBASE_API_KEY=your-firebase-api-key
-VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_APP_ID=your-firebase-app-id
-ALLOWED_USER_EMAILS=your-email@example.com
-AUTH_SECRET=your-random-secret-key-here
-```
+#### Frontend (Firebase設定)
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_APP_ID`
 
-### ログイン
+#### Backend (認証・認可)
+- `ALLOWED_USER_EMAILS`: 許可するメールアドレス（カンマ区切り）
+- `AUTH_SECRET`: セッションCookie署名用のランダムな文字列
+- `GOOGLE_CLOUD_PROJECT`: ID Token検証に使用するGCPプロジェクトID
+- `CORS_ORIGINS`: フロントエンドのURL（例: `http://localhost:5173`）
 
-アプリにアクセスすると自動的にログイン画面へリダイレクトされます。
-Firebase で作成したメールアドレスとパスワードでログインしてください。
+### ログインフロー
+
+1. アプリ（Frontend）にアクセスすると、未認証の場合は `/login` 画面が表示されます。
+2. Google 認証やメールアドレス/パスワード等（設定による）でサインインします。
+3. Frontend が ID Token を取得し、Backend の `/api/auth/session` に送信します。
+4. Backend がセッションCookieを発行し、以降の API 利用が可能になります。
 
 ## GCP デプロイ準備
 
@@ -118,6 +133,8 @@ gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
 
 ### GCP 実行環境
 
+- **判断: Frontend のデプロイは必須 (Required)**
+    - 理由: `/login` 画面の提供と Firebase クライアントサインイン（ID Token 発行）を Frontend が担うため、Backend だけでは認証フローが成立しません。
 - **Backend**: Cloud Run (ポート `8000`)
 - **Frontend**: Cloud Run (ポート `8080`) または Firebase Hosting
 
@@ -135,11 +152,16 @@ gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
 
 ### 環境変数
 
-| 変数名 | 説明 |
-|--------|------|
-| VITE_FIREBASE_API_KEY | Firebase API Key |
-| ALLOWED_USER_EMAILS | 許可するメールアドレス |
-| AUTH_SECRET | セッション署名用シークレット |
+| 変数名 | 担当 | 説明 |
+|--------|------|------|
+| `VITE_FIREBASE_API_KEY` | Frontend | Firebase API Key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Frontend | Firebase Auth Domain |
+| `VITE_FIREBASE_PROJECT_ID` | Frontend | Firebase Project ID |
+| `VITE_FIREBASE_APP_ID` | Frontend | Firebase App ID |
+| `ALLOWED_USER_EMAILS` | Backend | 許可するメールアドレス（カンマ区切り） |
+| `AUTH_SECRET` | Backend | セッションCookie署名用シークレット |
+| `GOOGLE_CLOUD_PROJECT` | Backend | ID Token検証用GCPプロジェクトID |
+| `CORS_ORIGINS` | Backend | 許可するオリジン（フロントエンドのURL） |
 
 ### 注意事項
 
